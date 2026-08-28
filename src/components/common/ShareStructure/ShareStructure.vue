@@ -120,7 +120,7 @@
           >
             {{ row.item.name }}
             <ActionChip
-              v-if="row.item.action && isEditMode"
+              v-if="row.item.action"
               :actionable-item="row.item"
               :edited-label="editedLabel"
               class="pb-2"
@@ -327,7 +327,7 @@
                 </li>
               </ul>
               <ActionChip
-                v-if="row.item.action !== ActionTypes.REMOVED && seriesItem.action && isEditMode"
+                v-if="row.item.action !== ActionTypes.REMOVED && seriesItem.action"
                 :actionable-item="seriesItem"
                 :edited-label="editedLabel"
                 class="pb-2"
