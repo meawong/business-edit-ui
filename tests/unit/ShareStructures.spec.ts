@@ -4,6 +4,7 @@ import { mount } from '@vue/test-utils'
 import ShareStructures from '@/components/common/ShareStructure/ShareStructures.vue'
 import { FilingTypes } from '@/enums'
 import { CorpTypeCd } from '@bcrs-shared-components/corp-type-module'
+import { ActionTypes } from '@bcrs-shared-components/enums'
 import { createPinia, setActivePinia } from 'pinia'
 import { useStore } from '@/store/store'
 
@@ -35,7 +36,7 @@ describe('Share Structures component', () => {
           hasMaximumShares: true,
           maxNumberOfShares: 50,
           hasRightsOrRestrictions: false,
-          action: 'removed'
+          action: ActionTypes.REMOVED
         }
       ]
     },
@@ -145,6 +146,87 @@ describe('Share Structures component', () => {
       store.stateModel.shareStructureStep.resolutionDates = ['2024-01-01']
 
       expect(wrapper.vm.resolutionsRequired).toBe(false)
+    })
+  })
+
+  describe('Action Chips', () => {
+    const alteredShareClasses: any = [
+      {
+        id: '1',
+        name: 'Common Shares',
+        priority: 0,
+        maxNumberOfShares: 10000,
+        parValue: 1.58,
+        currency: 'CAD',
+        hasRightsOrRestrictions: true,
+        action: ActionTypes.EDITED,
+        series: [
+          {
+            id: '1',
+            name: 'Share Series 1',
+            priority: 1,
+            hasMaximumShares: true,
+            maxNumberOfShares: 50,
+            hasRightsOrRestrictions: false,
+            action: ActionTypes.ADDED
+          }
+        ]
+      },
+      {
+        id: '2',
+        name: 'Non-voting Shares',
+        priority: 1,
+        maxNumberOfShares: 1000,
+        parValue: null,
+        currency: '',
+        hasRightsOrRestrictions: false,
+        action: ActionTypes.REMOVED,
+        series: []
+      }
+    ]
+
+    it('shows action chips for added/edited class and series in edit mode', async () => {
+      store.stateModel.shareStructureStep.shareClasses = alteredShareClasses
+      await Vue.nextTick()
+
+      const classRow = wrapper.find('.class-row')
+      expect(classRow.findComponent({ name: 'ActionChip' }).exists()).toBe(true)
+
+      const seriesRow = wrapper.find('.series-row')
+      expect(seriesRow.findComponent({ name: 'ActionChip' }).exists()).toBe(true)
+    })
+
+    it('still shows action chips for added/edited class and series in summary (non-edit) mode', async () => {
+      store.stateModel.shareStructureStep.shareClasses = alteredShareClasses
+
+      const summaryWrapper = mount(ShareStructures, {
+        vuetify,
+        propsData: { isEditMode: false }
+      })
+      await Vue.nextTick()
+
+      const classRow = summaryWrapper.find('.class-row')
+      expect(classRow.findComponent({ name: 'ActionChip' }).exists()).toBe(true)
+
+      const seriesRow = summaryWrapper.find('.series-row')
+      expect(seriesRow.findComponent({ name: 'ActionChip' }).exists()).toBe(true)
+
+      summaryWrapper.destroy()
+    })
+
+    it('does not render a row (or chip) for a removed class in summary (non-edit) mode', async () => {
+      store.stateModel.shareStructureStep.shareClasses = alteredShareClasses
+
+      const summaryWrapper = mount(ShareStructures, {
+        vuetify,
+        propsData: { isEditMode: false }
+      })
+      await Vue.nextTick()
+
+      // removed class should be excluded entirely from the summary, not just its chip
+      expect(summaryWrapper.text()).not.toContain('Non-voting Shares')
+
+      summaryWrapper.destroy()
     })
   })
 })
